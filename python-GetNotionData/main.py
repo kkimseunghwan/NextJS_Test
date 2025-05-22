@@ -60,37 +60,79 @@ def get_published_blog_posts_from_notion():
         return []
 
 def format_rich_text_array(rich_text_array):
-    """Notion의 rich_text 배열을 Markdown 문자열로 변환합니다."""
+    """Notion의 rich_text 배열을 Markdown 또는 HTML 문자열로 변환합니다 (색상 포함)."""
     markdown_chunks = []
     for item in rich_text_array:
         if item['type'] == 'text':
             content = item['text']['content']
             annotations = item['annotations']
             
-            if item['text'].get('link') and item['text']['link'].get('url'):
-                # 링크가 있는 경우, 먼저 링크로 감싸고 내부 스타일 적용
-                text_chunk = f"[{content}]({item['text']['link']['url']})"
-            else:
-                text_chunk = content
+            # HTML 태그 및 스타일 문자열 초기화
+            html_open_tags = ""
+            html_close_tags = ""
+            styles = []
 
-            if annotations.get('code'): # 인라인 코드
-                text_chunk = f"`{text_chunk}`"
-            # 인라인 코드는 다른 스타일과 중첩되지 않는 경우가 많으므로 먼저 처리
-            # 또는, 코드 스타일이 다른 스타일보다 우선순위가 높다면 순서 조정
+            # Notion 색상 값과 실제 CSS 색상 값 매핑 (필요에 따라 확장)
+            # 전체 목록은 Notion 개발자 문서 참고: https://developers.notion.com/reference/rich-text#annotations
+            # color_map = {
+            #     "gray": "#787774", "brown": "#976D57", "orange": "#D9730D",
+            #     "yellow": "#CB912F", "green": "#438A63", "blue": "#2B6DAD",
+            #     "purple": "#804FB3", "pink": "#C54894", "red": "#D44C47",
+            #     # 배경색은 background-color로 적용
+            #     "gray_background": "#E3E2E0", "brown_background": "#E9E0DB",
+            #     "orange_background": "#FADEC9", "yellow_background": "#FDECC8",
+            #     "green_background": "#DBEDDB", "blue_background": "#D3E5EF",
+            #     "purple_background": "#E8DEEE", "pink_background": "#F5DBE9",
+            #     "red_background": "#FCE4E2"
+            # }
+
+            # # 어노테이션된 색상 처리
+            # notion_color = annotations.get('color', 'default')
+            # if notion_color != 'default':
+            #     if '_background' in notion_color:
+            #         css_color = color_map.get(notion_color)
+            #         if css_color:
+            #             styles.append(f"background-color: {css_color};")
+            #     else:
+            #         css_color = color_map.get(notion_color)
+            #         if css_color:
+            #             styles.append(f"color: {css_color};")
             
+            # # 스타일이 있다면 span 태그로 감싸기
+            # if styles:
+            #     html_open_tags += f'<span style="{ "".join(styles) }">'
+            #     html_close_tags = '</span>' + html_close_tags
+
+            # 나머지 어노테이션 처리 (HTML 태그 또는 Markdown)
+            # 여기서는 Markdown을 우선하고, 색상만 HTML로 처리하는 예시입니다.
+            # 만약 모든 스타일을 HTML로 통일하고 싶다면, bold 등도 <strong> 등으로 변경해야 합니다.
+            styled_content = content
+            if annotations.get('code'):
+                styled_content = f"`{styled_content}`" # Markdown 인라인 코드
+            
+            # Markdown 스타일은 HTML 태그 바깥쪽에 적용 (또는 안쪽에 <strong> 등 사용)
             if annotations.get('bold'):
-                text_chunk = f"**{text_chunk}**"
+                styled_content = f"**{styled_content}**"
             if annotations.get('italic'):
-                text_chunk = f"*{text_chunk}*"
+                styled_content = f"*{styled_content}*"
             if annotations.get('strikethrough'):
-                text_chunk = f"~~{text_chunk}~~"
-            # underline은 표준 Markdown에 없으므로 생략하거나 HTML <u> 태그 사용 고려
+                styled_content = f"~~{styled_content}~~"
+            # underline은 표준 Markdown에 없으므로 <u> 태그 사용 또는 생략
+            if annotations.get('underline'):
+                 styled_content = f"<u>{styled_content}</u>" # HTML 밑줄
+                 # <u> 태그를 사용하려면 rehype-raw 등이 필요할 수 있음
+
+            text_chunk = html_open_tags + styled_content + html_close_tags
             
-            markdown_chunks.append(text_chunk)
+            if item['text'].get('link') and item['text']['link'].get('url'):
+                markdown_chunks.append(f"[{text_chunk}]({item['text']['link']['url']})")
+            else:
+                markdown_chunks.append(text_chunk)
+
         elif item['type'] == 'mention':
-            # 간단한 멘션 처리 (예: 페이지 멘션)
+            # ... (이전과 동일 또는 필요에 따라 수정) ...
             if item['mention']['type'] == 'page':
-                 markdown_chunks.append(f"@[Page: {item['plain_text']}]") # 또는 링크로 만들 수 있다면 링크로
+                 markdown_chunks.append(f"@[Page: {item['plain_text']}]")
             else:
                  markdown_chunks.append(item['plain_text'])
         elif item['type'] == 'equation':
@@ -226,7 +268,7 @@ if __name__ == "__main__":
     current_script_dir = os.path.dirname(__file__) 
     # Next.js 프로젝트 폴더가 이 스크립트 폴더의 부모 폴더 안에 있다고 가정 (예: ../mydevelopmentblog-nextjs)
     # 실제 Next.js 프로젝트 폴더 이름을 정확히 지정해야 합니다.
-    nextjs_project_name = "mydevelopmentblog-nextjs" # <<--- 사용자님의 Next.js 프로젝트 폴더 이름으로 변경!!!
+    nextjs_project_name = "nextjs-blog" # <<--- 사용자님의 Next.js 프로젝트 폴더 이름으로 변경!!!
     output_dir = os.path.abspath(os.path.join(current_script_dir, '..', nextjs_project_name, 'content', 'blog'))
     
     # 출력 디렉토리가 없으면 생성
@@ -251,6 +293,9 @@ if __name__ == "__main__":
         tags_prop = properties.get("Tags", {}).get("multi_select", [])
         tags = [tag["name"] for tag in tags_prop]
 
+        description_prop = properties.get("Description", {}).get("rich_text", [])
+        description = description_prop[0]["plain_text"] if description_prop else ""
+
         print(f"\nProcessing Post: {title}")
         
         markdown_content = get_page_content_as_markdown(page_id)
@@ -264,14 +309,15 @@ if __name__ == "__main__":
             f'title: "{escaped_title}"',
             f'date: "{published_date if published_date else ""}"',
             f'tags: {tags}', # YAML 리스트 형식
-            f'slug: "{slug}"'
+            f'slug: "{slug}"',
+            f'description: "{description}"',
             # 필요시 다른 메타데이터 추가 (예: summary, coverImage 등)
             # summary_prop = properties.get("Summary", {}).get("rich_text", [])
             # summary = summary_prop[0]["plain_text"] if summary_prop else ""
             # if summary:
             #     frontmatter_lines.append(f'summary: "{summary.replace("\"", "\\\"")}"')
             "---",
-            "" # Frontmatter와 본문 사이에 빈 줄
+            "", # Frontmatter와 본문 사이에 빈 줄
         ]
         frontmatter = "\n".join(frontmatter_lines)
         
