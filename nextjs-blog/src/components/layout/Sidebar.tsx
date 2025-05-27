@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   return (
     // <aside className="w-full h-full p-6 flex flex-col">
-    <aside className="w-full h-full p-5 flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-y-auto custom-scrollbar-hide ">
+    <aside className="w-full h-full p-5 flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-y-auto overflow-x-hidden custom-scrollbar-hide">
       {/* 배경 도형 패턴 */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-32 h-32 bg-cyan-400 rotate-45 transform -translate-x-16 -translate-y-16"></div>

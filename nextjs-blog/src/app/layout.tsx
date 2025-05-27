@@ -27,7 +27,7 @@ export default function RootLayout({
           {" "}
           {/* min-h-screen은 body 또는 html에 적용되거나, 필요시 여기에 추가 */}
           {/* 왼쪽 사이드바 */}
-          <div className="hidden md:flex md:w-64 lg:w-72 flex-col fixed inset-y-0 z-40">
+          <div className="hidden md:flex md:w-64 lg:w-64 flex-col fixed inset-y-0 z-40">
             {" "}
             {/* flex-col 추가 */}
             <Sidebar />{" "}

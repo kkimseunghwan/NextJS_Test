@@ -86,3 +86,17 @@
     @apply bg-background text-foreground;
   }
 }
+/* 스크롤바 숨기기 유틸리티 */
+@layer utilities {
+  .custom-scrollbar-hide::-webkit-scrollbar {
+    display: none; /* WebKit 브라우저 (Chrome, Safari 등) */
+  }
+  .custom-scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  /* ... (다른 utilities) ... */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
