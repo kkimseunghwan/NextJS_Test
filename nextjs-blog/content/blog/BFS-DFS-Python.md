@@ -1,9 +1,11 @@
 ---
 title: "DFS와 BFS 파이썬 코드 정리"
 date: "2025-05-01"
-tags: ['Python', 'Algorithm']
+tags: ["Python", "Algorithm"]
 slug: "BFS-DFS-Python"
 description: "백준 1260 DFS, BFS 문제 풀이"
+featured_image: ""
+notion_last_edited_time: "2025-05-27T09:24:00.000Z"
 ---
 ### 백준 1260 DFS, BFS 문제 풀이
 

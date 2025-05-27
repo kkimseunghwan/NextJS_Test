@@ -11,6 +11,7 @@ interface PostFrontmatter {
   date: string;
   tags?: string[];
   description?: string;
+  featured_image?: string; // 이미지
   // 필요에 따라 다른 필드 추가 (예: summary)
 }
 

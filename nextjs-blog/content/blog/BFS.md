@@ -1,13 +1,13 @@
 ---
 title: "BFS 너비 우선 탐색 알고리즘"
 date: "2025-05-03"
-tags: ['Algorithm']
+tags: ["Algorithm"]
 slug: "BFS"
 description: "너비 우선 탐색(BFS, Breadth-First Search) 알고리즘은 그래프나 트리에서 특정 노드를 시작으로 인접한 노드들을 먼저 방문하는 탐색 알고리즘입니다."
+featured_image: "/images/BFS/cover.png"
+notion_last_edited_time: "2025-05-27T07:24:00.000Z"
 ---
-![image](https://prod-files-secure.s3.us-west-2.amazonaws.com/1f51a89b-82d4-4d76-83c9-efd3bd28e820/7d66ec30-2ade-4901-a536-dbbc56c8596d/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ASIAZI2LB466WI3LTH7W%2F20250522%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20250522T091700Z&X-Amz-Expires=3600&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEBkaCXVzLXdlc3QtMiJGMEQCIHK5aiuXOrsmWBsfbJXoNHAfe1F1JrBXoQ5IYXp%2FPL4%2FAiBmetpgPtSC2AKaOKXlClU%2FRcp%2Btboe2e6%2B%2B8fPJF59DCqIBAjS%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAAaDDYzNzQyMzE4MzgwNSIMYG8JTL2X%2BmY9zG4hKtwDTse3WUJ7%2BBXocKSb68zIxtkqS7TiPnawJ1Y6HVh4jG7ne5lW6gciusXUALod0w0tNAYjasxK27xQFWHNqsrNYyCFi1FRZlbZyt0ENIGYnuVNeFPxnQ6YSjYPy5mF%2FYUJ37Nsol%2FTDsUeP68IYgLhPjlbgiw%2FEKbZYSOUq6kNXe%2BwMsneDaOq6vCLYhHSrkRtkybzi4PJ55UTRV9J4kmaIHOsiAD9BNFLd4i54SSquS4B%2BFN3sZ1darNts2VlrlQE%2BNdhXXl%2Bj%2BlmowVXnCdrSWRXtxViqvAmHhbLVMMsxd97EXgtj7Zc1dxC%2Fbd5ZSLtARNqlxQO71puAcg1vDa0Jxhfm0bDuyJiX1LEkzPIRCgYoTDUJSobq1YG51mEciZ6eDqS540xKQuu6pZz5H9f4eUYcszq4T3aqy2M6W21HBKVwo0mvW7fh%2BRzWpOgl%2FOtHkStaoUiX3rxxYF4axSGe%2BOM3OF4UnMRgcWXNhrQYjBRDJDDNBEduZzC7iVY7kRGc4H1W0uOdbxkR6Py0%2FRaAhMoW%2FIZU1GsG4oaHkcJ5zX%2F1Lhb3%2FQ9SAlogDQSyBgItCqGxX2DvbzR00ad5MMGuUDW7MvJ6BpCcCRHhVX85iEmK69wsu6BPKdpojcw48K7wQY6pgF2KPkyeAHHEQ07eOI3XMgbACverHS4Z9AZnH3W%2FfwDOU3XolMkx5DL47Ss7x6kPSkzs%2BCUfoAx9%2FiTQQr0gX2CdeXWqLBWtBpmjK1SWf5NUfT8BmvKvVWa60BnvVHGi7EOFc9mRUSLiFh3GfuKu8dm%2BBG6YloDNFmjkK7kse6lP0wWMxV0sUHEwHC9UqBnKvYOJxqon2w6srEKYAwwfSr6jtalT2dK&X-Amz-Signature=b797f8987e5845bf56d699cefc30c3ccbb8ab16b80dab852a48c7d782bbd21fe&X-Amz-SignedHeaders=host&x-id=GetObject)
-
-## BFS 너비 우선 탐색 알고리즘이란?
+## BFS 너비 우선 탐색 알고리즘이란??
 
 너비 우선 탐색(BFS, Breadth-First Search) 알고리즘은 그래프나 트리에서 특정 노드를 시작으로 인접한 노드들을 먼저 방문하는 탐색 알고리즘입니다.
 
