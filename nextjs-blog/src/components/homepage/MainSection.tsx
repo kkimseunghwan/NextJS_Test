@@ -36,11 +36,6 @@ export default function HeroSection(/* props: HeroSectionProps */) {
           <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-pink-400/30 rounded-full animate-pulse delay-1000"></div>
         </div>
 
-        {/* TopNavbar */}
-        <div className="absolute top-0 left-0 right-0 z-20">
-          <TopNavbar />
-        </div>
-
         {/* 메인 콘텐츠 */}
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
           {/* 상태 배지 */}

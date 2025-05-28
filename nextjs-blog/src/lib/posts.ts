@@ -19,8 +19,15 @@ interface PostData extends PostFrontmatter {
   slug: string;
 }
 
-interface PostFullData extends PostData {
+export interface PostFullData extends PostData {
   content: string;
+}
+
+export interface TocEntry {
+  value: string;
+  depth: number;
+  id: string;
+  children?: TocEntry[];
 }
 
 // 모든 게시물의 정렬된 메타데이터를 가져오는 함수 (목록 페이지용)

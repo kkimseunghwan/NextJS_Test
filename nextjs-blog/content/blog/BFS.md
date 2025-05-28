@@ -5,8 +5,16 @@ tags: ["Algorithm"]
 slug: "BFS"
 description: "너비 우선 탐색(BFS, Breadth-First Search) 알고리즘은 그래프나 트리에서 특정 노드를 시작으로 인접한 노드들을 먼저 방문하는 탐색 알고리즘입니다."
 featured_image: "/images/BFS/cover.png"
-notion_last_edited_time: "2025-05-27T07:24:00.000Z"
+notion_last_edited_time: "2025-05-28T09:01:00.000Z"
 ---
+# BFS
+
+## BFS
+
+### BFS
+
+BFS
+
 ## BFS 너비 우선 탐색 알고리즘이란??
 
 너비 우선 탐색(BFS, Breadth-First Search) 알고리즘은 그래프나 트리에서 특정 노드를 시작으로 인접한 노드들을 먼저 방문하는 탐색 알고리즘입니다.

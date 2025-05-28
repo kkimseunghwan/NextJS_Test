@@ -48,9 +48,9 @@ export default function RootLayout({
               {children}
             </main>
             {/* 푸터 (선택 사항) */}
-            {/* <footer className="p-4 text-center text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+            <footer className="p-4 text-right bg-black text-xs text-gray-400 border-t border-gray-700">
               © 2025 Dev_Cong. All rights reserved.
-            </footer> */}
+            </footer>
           </div>
         </div>
       </body>

@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import HeroSection from "@/components/homepage/MainSection";
+import MainSection from "@/components/homepage/MainSection";
 import AboutSection from "@/components/homepage/AboutSection";
 import TechStackSection from "@/components/homepage/TechStackSection";
 import LatestPostsSection from "@/components/homepage/LatestPostsSection";
@@ -85,7 +85,7 @@ export default function HomePage() {
 
   return (
     <>
-      <HeroSection />
+      <MainSection />
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-850 via-slate-800 to-slate-900">
         <AboutSection />
         <TechStackSection

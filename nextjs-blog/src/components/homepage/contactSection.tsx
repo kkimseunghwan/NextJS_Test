@@ -4,10 +4,7 @@ export default function ContactSection() {
   return (
     <>
       {/* About 섹션 */}
-      <section
-        id="about-section"
-        className="bg-black py-20 md:py-10 relative overflow-hidden "
-      >
+      <section className="bg-black py-20 md:py-10 relative overflow-hidden ">
         <div className="container mx-auto px-6 lg:px-8 relative">
           {/* 헤더 왼쪽 정렬 */}
           <div className="mb-12 md:mb-7 pl-5">
