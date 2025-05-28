@@ -6,7 +6,7 @@ import matter from "gray-matter";
 const postsDirectory = path.join(process.cwd(), "content", "blog");
 
 // 게시물 메타데이터 타입을 정의합니다. (기존 코드와 일치 또는 확장)
-interface PostFrontmatter {
+export interface PostFrontmatter {
   title: string;
   date: string;
   tags?: string[];
@@ -70,18 +70,40 @@ export function getAllSortedPostsData(
     }
   });
 }
+
+// 타입을 정의.
+export interface TagWithCount {
+  name: string;
+  count: number;
+}
+
 // 모든 고유 태그 목록을 가져오는 함수
-export function getAllUniqueTags(): string[] {
+export function getAllUniqueTagsWithCount(): TagWithCount[] {
   const allPosts = getAllSortedPostsData(); // 필터링 없이 모든 게시물을 가져옵니다.
-  const tagsSet = new Set<string>();
+  const tagsDict: { [key: string]: number } = {};
 
   allPosts.forEach((post) => {
     if (post.tags) {
-      post.tags.forEach((tag) => tagsSet.add(tag));
+      post.tags?.forEach((tag) => {
+        if (tagsDict[tag]) {
+          tagsDict[tag]++;
+        } else {
+          tagsDict[tag] = 1;
+        }
+      });
     }
   });
 
-  return Array.from(tagsSet).sort(); // 알파벳 순으로 정렬된 태그 배열 반환
+  const sortedTagsWithCount = Object.entries(tagsDict)
+    .map(([name, count]) => ({ name, count })) // 객체 형태로 변환
+    .sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count; // 게시물 많은 순
+      }
+      return a.name.localeCompare(b.name); // 이름 순
+    });
+
+  return sortedTagsWithCount;
 }
 
 // 모든 게시물의 slug 목록을 가져오는 함수 (generateStaticParams용) - 기존과 동일

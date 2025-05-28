@@ -9,13 +9,14 @@ import {
   Tag,
   Rss,
   LayoutGrid,
+  BookMarked,
 } from "lucide-react"; // 아이콘 예시
-import { getAllUniqueTags } from "@/lib/posts"; // 태그 데이터 가져오기
+import { getAllUniqueTagsWithCount } from "@/lib/posts"; // 태그 데이터 가져오기
 
 // Sidebar는 서버에서 데이터를 미리 가져와 렌더링할 수 있습니다.
 // 또는 태그 목록을 클라이언트에서 가져오려면 이 컴포넌트를 'use client'로 만들고 useEffect 사용
 export default function Sidebar() {
-  const uniqueTags = getAllUniqueTags(); // 서버 컴포넌트이므로 직접 호출 가능
+  const uniqueTags = getAllUniqueTagsWithCount(); // 서버 컴포넌트이므로 직접 호출 가능
 
   return (
     // <aside className="w-full h-full p-6 flex flex-col">
@@ -86,7 +87,7 @@ export default function Sidebar() {
         <Link href="/blog" className="group relative block">
           <div className="flex items-center px-4 py-3 bg-gradient-to-r from-slate-800/60 to-slate-700/60 border border-slate-600/40 rounded-xl hover:from-purple-900/40 hover:to-purple-800/40 hover:border-purple-500/50 transition-all duration-300">
             <div className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-purple-400 to-purple-600 rounded-r-full transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300"></div>
-            <Rss className="w-5 h-5 mr-3 text-slate-400 group-hover:text-purple-400 transition-colors" />
+            <BookMarked className="w-5 h-5 mr-3 text-slate-400 group-hover:text-purple-400 transition-colors" />
             <span className="text-sm font-semibold text-slate-200 group-hover:text-white">
               블로그
             </span>
@@ -119,7 +120,7 @@ export default function Sidebar() {
             ◆ CATEGORIES
           </div>
 
-          <div className="bg-gradient-to-br from-slate-800/40 to-slate-700/40 backdrop-blur-sm border border-slate-600/30 rounded-2xl p-4">
+          <div className="bg-gradient-to-br from-slate-800/40 to-slate-700/40 backdrop-blur-sm border border-slate-600/30 rounded-2xl p-3">
             <ul className="space-y-1">
               <li>
                 <Link
@@ -131,33 +132,31 @@ export default function Sidebar() {
                   <span className="text-sm text-slate-400 group-hover:text-slate-200 font-medium">
                     전체 보기
                   </span>
-
-                  {/* Gaming-style hex indicator */}
-                  <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-4 h-4 border border-cyan-400/50 transform rotate-45 flex items-center justify-center">
-                      <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
-                    </div>
-                  </div>
                 </Link>
               </li>
-              {uniqueTags.map((tag, index) => (
-                <li key={tag}>
+              {uniqueTags.map((tag) => (
+                <li key={tag.name}>
                   <Link
-                    href={`/blog?tag=${encodeURIComponent(tag)}`}
+                    href={`/blog?tag=${encodeURIComponent(tag.name)}`}
                     className="group flex items-center px-3 py-2.5 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 rounded-lg transition-all duration-200"
                   >
                     <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full mr-3 opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all"></div>
                     <Tag className="w-4 h-4 mr-2 text-slate-500 group-hover:text-slate-300 transition-colors" />
                     <span className="text-sm text-slate-400 group-hover:text-slate-200 font-medium">
-                      {tag}
+                      {tag.name}
                     </span>
+                    <div className="ml-auto">
+                      <span className="px-2 py-0.5 bg-slate-700 group-hover:bg-cyan-500/30 text-slate-400 group-hover:text-cyan-300 rounded-full text-[0.7rem] font-mono transition-colors duration-150">
+                        {tag.count}
+                      </span>
+                    </div>
 
                     {/* Gaming-style hex indicator */}
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="w-4 h-4 border border-cyan-400/50 transform rotate-45 flex items-center justify-center">
                         <div className="w-1 h-1 bg-cyan-400 rounded-full"></div>
                       </div>
-                    </div>
+                    </div> */}
                   </Link>
                 </li>
               ))}

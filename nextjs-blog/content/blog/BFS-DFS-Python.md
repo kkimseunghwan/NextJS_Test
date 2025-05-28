@@ -4,8 +4,8 @@ date: "2025-05-01"
 tags: ["Python", "Algorithm"]
 slug: "BFS-DFS-Python"
 description: "백준 1260 DFS, BFS 문제 풀이"
-featured_image: ""
-notion_last_edited_time: "2025-05-27T09:24:00.000Z"
+featured_image: "/images/BFS-DFS-Python/cover.jpg"
+notion_last_edited_time: "2025-05-28T06:04:00.000Z"
 ---
 ### 백준 1260 DFS, BFS 문제 풀이
 

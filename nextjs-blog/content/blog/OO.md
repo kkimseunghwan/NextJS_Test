@@ -4,8 +4,8 @@ date: "2025-05-27"
 tags: ["Python", "잠담"]
 slug: "OO"
 description: "간단한 DP문제이지만, 메모리와 시간복잡도를 신경써야 하는 문제."
-featured_image: ""
-notion_last_edited_time: "2025-05-27T11:00:00.000Z"
+featured_image: "/images/OO/cover.jpg"
+notion_last_edited_time: "2025-05-28T06:04:00.000Z"
 ---
 ### 백준 1904 01타일 문제
 

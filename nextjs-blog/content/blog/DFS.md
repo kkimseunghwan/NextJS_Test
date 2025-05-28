@@ -4,8 +4,8 @@ date: "2025-05-02"
 tags: ["Algorithm"]
 slug: "DFS"
 description: "DFS(Depth-First Search)는 그래프 탐색 알고리즘의 종류 중 하나입니다. 여기서 그래프는 여러 개의 점(정점)과 이 점들을 연결하는 선(간선)으로 이루어진 구조를 말합니다."
-featured_image: "/images/DFS/20006c661e8280b697f7cac78f317263.png"
-notion_last_edited_time: "2025-05-27T06:06:00.000Z"
+featured_image: "/images/DFS/cover.jpg"
+notion_last_edited_time: "2025-05-28T06:04:00.000Z"
 ---
 ![image](/images/DFS/20006c661e8280b697f7cac78f317263.png)
 

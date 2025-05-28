@@ -1,7 +1,7 @@
 // src/app/blog/page.tsx (Server Component)
 import Link from "next/link";
 import Image from "next/image";
-import { getAllSortedPostsData, getAllUniqueTags } from "@/lib/posts";
+import { getAllSortedPostsData, getAllUniqueTagsWithCount } from "@/lib/posts";
 import type { PostData } from "@/lib/posts";
 import SortDropdown from "./SortDropdownClient";
 
@@ -17,7 +17,7 @@ export default async function BlogPage({
     currentTag,
     currentSort as "latest" | "oldest"
   );
-  const uniqueTags = getAllUniqueTags();
+  const uniqueTags = getAllUniqueTagsWithCount();
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "날짜 없음";
@@ -55,18 +55,18 @@ export default async function BlogPage({
           </Link>
           {uniqueTags.map((tag) => (
             <Link
-              key={tag}
-              href={`/blog?tag=${encodeURIComponent(tag)}${
+              key={tag.name}
+              href={`/blog?tag=${encodeURIComponent(tag.name)}${
                 currentSort !== "latest" ? `&sort=${currentSort}` : ""
               }`}
               className={`px-3 py-1 text-sm rounded-full transition-colors
                           ${
-                            currentTag === tag
+                            currentTag === tag.name
                               ? "bg-blue-600 text-white"
                               : "bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-500"
                           }`}
             >
-              {tag}
+              {tag.name}
             </Link>
           ))}
         </div>

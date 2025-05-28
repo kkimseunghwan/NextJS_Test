@@ -34,18 +34,12 @@ export default function RootLayout({
             {/* Sidebar 자체에서 h-full 또는 flex-1을 사용하여 내부 스크롤 관리 */}
           </div>
           {/* 오른쪽 메인 영역 */}
-          <div className="flex-1 flex flex-col md:ml-64 lg:ml-72">
+          <div className="flex-1 flex flex-col md:ml-64 lg:ml-64">
             {" "}
             {/* Sidebar 너비만큼 marginLeft */}
-            {/* 상단 네비게이션 바 */}
-            <div className="sticky top-0 z-30">
-              {" "}
-              {/* z-index 조정 */}
-              <TopNavbar /> {/* TopNavbar를 사용한다고 가정 */}
-            </div>
             {/* 메인 콘텐츠 영역 (스크롤 가능) */}
             {/* 이 main 태그가 실제 스크롤을 담당합니다. */}
-            <main className="flex-1 p-4 sm:p-6 md:p-8">
+            <main className="flex-1">
               {/* overflow-y-auto는 이 main 태그의 부모인 '오른쪽 메인 영역' div가 
                   화면 높이를 초과할 경우 자연스럽게 body 스크롤이 생기도록 하거나,
                   만약 TopNavbar와 Footer를 고정시키고 싶다면 main에 h-0와 함께 overflow-y-auto를 줄 수 있습니다.

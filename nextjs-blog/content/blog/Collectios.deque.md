@@ -4,8 +4,8 @@ date: "2025-05-27"
 tags: ["Python", "Baekjoon"]
 slug: "Collectios.deque"
 description: "deque는 “양쪽 끝”에서 요소를 추가하거나 삭제하는 기능을 가진 자료구조이다. 이 때문에 큐(Queue)와 스택(Stack)의 기능을 모두 수행할 수 있다."
-featured_image: ""
-notion_last_edited_time: "2025-05-27T11:00:00.000Z"
+featured_image: "/images/Collectios.deque/cover.jpg"
+notion_last_edited_time: "2025-05-28T06:04:00.000Z"
 ---
 정리의 원인이 된 문제
 

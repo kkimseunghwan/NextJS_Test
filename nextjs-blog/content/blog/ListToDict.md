@@ -4,8 +4,8 @@ date: "2025-05-27"
 tags: ["Python", "Collections"]
 slug: "ListToDict"
 description: "리스트를 사전(dict)으로 변환하는 방법은 다양한 상황에 따라 달라집니다. 여기서는 몇 가지 일반적인 방법을 소개하겠습니다."
-featured_image: ""
-notion_last_edited_time: "2025-05-27T11:01:00.000Z"
+featured_image: "/images/ListToDict/cover.jpg"
+notion_last_edited_time: "2025-05-28T06:04:00.000Z"
 ---
 ## PYTHON 리스트 to 딕셔너리
 
