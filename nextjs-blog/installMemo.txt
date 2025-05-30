@@ -19,3 +19,5 @@ npm install rehype-slug @stefanprobst/rehype-extract-toc
 
 SELECT UI 추가 라이브러리
 npx shadcn@latest add select
+
+npm install mysql2

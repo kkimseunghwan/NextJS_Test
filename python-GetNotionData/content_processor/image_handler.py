@@ -99,20 +99,36 @@ def download_and_save_image(
         # 웹에서 접근할 최종 경로 (Next.js API 라우트 경로)
         image_web_path = f"{settings.IMAGE_WEB_BASE_PATH}/{post_slug}/{final_filename}"
 
-        # 3. 이미 파일이 존재하고, DB 정보도 일치하면 다운로드 건너뛰기 (선택적 최적화)
-        #    간단하게는 항상 다운로드하거나, 파일 존재 여부만 체크할 수 있음.
-        #    여기서는 파일이 존재하면 일단 넘어가는 것으로 단순화 (추후 DB와 local_path 비교 로직 추가 가능)
+        # 기본적으로 다운로드 수행
+        perform_download = True 
+
         if os.path.exists(local_image_disk_path):
-            # 이미지 다운 작업은 패스
-            logging.info(f"이미지 파일이 이미 존재합니다: {local_image_disk_path}. DB 정보 업데이트 시도.")
-        else:
+            if is_cover:
+                # 커버 이미지는 URL이 변경되었을 가능성이 있으므로, 항상 재다운로드 (또는 URL 비교 후 재다운로드)
+                logging.info(f"커버 이미지가 이미 존재합니다: {local_image_disk_path}. Notion URL 변경 시 덮어쓰기 위해 다운로드를 진행합니다.")
+            else: # 본문 내 이미지의 경우
+                logging.info(f"본문 이미지가 이미 존재합니다: {local_image_disk_path}. 다운로드를 건너뜁니다.")
+                perform_download = False 
+        
+        if perform_download:
             logging.info(f"이미지 다운로드 시작: {image_url} -> {local_image_disk_path}")
-            response = requests.get(image_url, stream=True, timeout=10)
-            response.raise_for_status() # HTTP 오류 발생 시 예외 발생
-            with open(local_image_disk_path, 'wb') as out_file:
-                shutil.copyfileobj(response.raw, out_file)
-            del response
-            logging.info(f"이미지 다운로드 성공: {final_filename}")
+            try:
+                response = requests.get(image_url, stream=True, timeout=10)
+                response.raise_for_status()
+                with open(local_image_disk_path, 'wb') as out_file:
+                    shutil.copyfileobj(response.raw, out_file)
+                del response
+                logging.info(f"이미지 다운로드 성공: {final_filename}")
+            except requests.exceptions.RequestException as e:
+                logging.error(f"이미지 다운로드 중 네트워크 오류 발생 (URL: {image_url}): {e}")
+                # 다운로드 실패 시 기존 파일 사용
+                if os.path.exists(local_image_disk_path):
+                    logging.warning(f"다운로드 실패, 기존 이미지 파일을 사용합니다: {local_image_disk_path}")
+                else:
+                    return None # 그거도 실패하면 None
+            except IOError as e:
+                logging.error(f"이미지 파일 저장 중 오류 발생 (Path: {local_image_disk_path}): {e}")
+                return None
 
 
         logging.info(f"DB 정보 업데이트 시도.")
@@ -128,9 +144,7 @@ def download_and_save_image(
 
         if not db_Manager.upsert_image_info(image_data_for_db):
             logging.error(f"이미지 정보 DB 저장/업데이트 실패: {unique_image_id_for_db}")
-            # 다운로드된 파일은 유지할 수도, 삭제할 수도 있음 (정책에 따라)
-            # 여기서는 일단 유지하고, 오류 로깅.
-            return None # DB 저장 실패 시 None 반환
+            return None 
 
         return image_web_path
 

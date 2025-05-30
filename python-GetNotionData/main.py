@@ -157,11 +157,15 @@ def cleanup_unused_images_for_post(post_id, used_content_image_ids, cover_image_
     logging.info(f"게시물(ID: {post_id})의 미사용 이미지 {len(ids_to_delete_from_db)}개 정리 완료.")
 
 
+# python-GetNotionData/main.py 수정 제안
+
+# ... (기존 import 및 함수 정의) ...
+
 def main_sync_process():
     """전체 Notion 동기화 프로세스를 실행합니다."""
     logging.info("Notion 동기화 프로세스 시작...")
 
-    db_Manager.init_db_schema()
+    db_Manager.init_db_schema() # DB 스키마 초기화 (기존 유지)
 
     # 1. Notion 클라이언트 가져오기
     notion_client = get_notion_client()
@@ -169,29 +173,60 @@ def main_sync_process():
         logging.critical("Notion 클라이언트 초기화 실패. 스크립트를 종료합니다.")
         return
 
-    # 2. 발행된 블로그 게시물 목록 가져오기 (Notion API 직접 호출)
-    #    기존 get_published_blog_posts_from_notion는 파일 저장 로직이 포함되었을 수 있으므로,
-    #    notion_handler.api에 순수 API 호출 함수 (가칭 get_published_blog_posts_from_notion_api)를 만듭니다.
-    published_pages_data = get_published_blog_posts_from_notion_api(notion_client)
+    # 2. Notion API에서 현재 '발행됨' 상태인 모든 게시물 ID 목록 가져오기
+    logging.info("Notion API에서 현재 '발행됨' 상태의 모든 페이지 ID를 조회합니다...")
+    notion_post_ids_set = set()
+    try:
+        # get_published_blog_posts_from_notion_api 함수는 페이지 전체 데이터를 반환하므로,
+        # ID만 추출하거나, ID만 가져오는 별도 API 호출 함수를 고려할 수 있습니다.
+        # 여기서는 기존 함수를 활용하여 ID만 추출합니다.
+        published_pages_data_from_notion = get_published_blog_posts_from_notion_api(notion_client)
+        if published_pages_data_from_notion:
+            for page_data in published_pages_data_from_notion:
+                if page_data.get('id'):
+                    notion_post_ids_set.add(page_data.get('id'))
+        logging.info(f"Notion API에서 {len(notion_post_ids_set)}개의 '발행됨' 페이지 ID를 가져왔습니다.")
+    except Exception as e:
+        logging.error(f"Notion API에서 페이지 ID 목록 조회 중 오류 발생: {e}")
+        return # ID 목록 조회 실패 시 동기화 중단
+
+    # 3. DB에 저장된 모든 게시물 ID 목록 가져오기
+    logging.info("DB에서 기존 게시물 ID 목록을 조회합니다...")
+    db_post_ids_set = set(db_Manager.get_all_post_ids_from_db()) # db_Manager에 새 함수 필요
+    logging.info(f"DB에서 {len(db_post_ids_set)}개의 게시물 ID를 가져왔습니다.")
+
+    # 4. 삭제된 게시물 처리: DB에는 있지만 Notion API 결과에는 없는 게시물
+    #    (Notion에서 삭제되었거나, '발행됨' 상태가 아니거나, 다른 DB로 옮겨졌거나 등)
+    posts_to_delete_ids = list(db_post_ids_set - notion_post_ids_set)
     
-    if not published_pages_data:
-        logging.info("Notion에서 가져올 발행된 게시물이 없습니다.")
-        return
+    if posts_to_delete_ids:
+        logging.info(f"Notion에 더 이상 존재하지 않거나 '발행됨' 상태가 아닌 게시물 {len(posts_to_delete_ids)}개를 DB에서 삭제합니다: {posts_to_delete_ids}")
+        for post_id_to_delete in posts_to_delete_ids:
+            logging.info(f"게시물 ID '{post_id_to_delete}' 삭제 처리 시작...")
+            # 4.1 연결된 이미지 정보 및 실제 파일 삭제 (cleanup_unused_images_for_post 함수 재활용 또는 확장)
+            #     이때 해당 post_id의 모든 이미지를 삭제 대상으로 간주 (used_content_image_ids와 cover_image_id를 빈 값으로 전달)
+            cleanup_unused_images_for_post(post_id_to_delete, [], None) # 해당 포스트의 모든 이미지 정리
+            
+            # 4.2 DB에서 게시물 관련 정보 삭제 (posts, post_tags 등)
+            #     db_Manager에 게시물 및 관련 레코드(태그 연결 등) 삭제 함수 필요
+            if db_Manager.delete_post_by_id(post_id_to_delete): # CASCADE 설정으로 post_tags도 자동 삭제될 수 있음
+                logging.info(f"게시물 ID '{post_id_to_delete}'가 DB에서 성공적으로 삭제되었습니다.")
+            else:
+                logging.error(f"게시물 ID '{post_id_to_delete}' DB 삭제 실패.")
+    else:
+        logging.info("DB에서 삭제할 게시물이 없습니다.")
 
-    logging.info(f"Notion에서 {len(published_pages_data)}개의 발행된 게시물을 가져왔습니다.")
-
-    # 3. 각 게시물 처리
-    for page_data in published_pages_data:
-        process_single_post(notion_client, page_data)
-        logging.info("-" * 30) # 게시물 처리 구분선
-
-    # 4. (선택적) 전체 미사용 이미지 정리 (DB에는 있지만 어떤 게시물에도 연결되지 않은 이미지)
-    #    이 로직은 더 복잡하며, 모든 게시물 처리 후 DB의 images 테이블과 실제 파일 시스템을 비교해야 합니다.
-    #    일단은 개별 게시물 처리 시 미사용 이미지를 정리하는 것으로 하고, 추후 필요시 추가.
+    # 5. 신규 또는 업데이트된 게시물 처리 (기존 로직)
+    if not published_pages_data_from_notion:
+        logging.info("Notion에서 가져올 발행된 게시물이 없습니다 (신규/업데이트 대상).")
+    else:
+        logging.info(f"Notion에서 가져온 {len(published_pages_data_from_notion)}개의 발행된 게시물에 대해 신규/업데이트 처리를 시작합니다.")
+        for page_data in published_pages_data_from_notion:
+            process_single_post(notion_client, page_data) # 기존 함수 사용
+            logging.info("-" * 30)
 
     logging.info("Notion 동기화 프로세스 완료.")
 
 
 if __name__ == "__main__":
-    
     main_sync_process()

@@ -1,24 +1,32 @@
-// src/lib/posts.ts
+// import { queryDb } from "./db";
+import { queryDb } from "./db";
+import type { RowDataPacket } from "mysql2";
+
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 
 const postsDirectory = path.join(process.cwd(), "content", "blog");
 
-// 게시물 메타데이터 타입을 정의합니다. (기존 코드와 일치 또는 확장)
+// DB 스키마와 일치하도록 타입 정의
+// 게시물 메타데이터
 export interface PostFrontmatter {
   title: string;
-  date: string;
+  date: string; // (YYYY-MM-DDTHH:mm:ss.sssZ)
   tags?: string[];
   description?: string;
-  featured_image?: string; // 이미지
-  // 필요에 따라 다른 필드 추가 (예: summary)
+  featured_image?: string; // 웹 경로
+  category?: string;
+  post_type?: string;
 }
 
-interface PostData extends PostFrontmatter {
+export interface PostData extends PostFrontmatter {
   slug: string;
+  id: string; // Page ID
+  notion_last_edited_time: string;
 }
 
+// Markdown 본문
 export interface PostFullData extends PostData {
   content: string;
 }
@@ -30,128 +38,186 @@ export interface TocEntry {
   children?: TocEntry[];
 }
 
-// 모든 게시물의 정렬된 메타데이터를 가져오는 함수 (목록 페이지용)
-// 태그 필터링 기능을 추가합니다.
-export function getAllSortedPostsData(
-  tag?: string,
-  sortOrder: "latest" | "oldest" = "latest" // 기본값은 'latest'
-): PostData[] {
-  let fileNames: string[];
-  try {
-    fileNames = fs.readdirSync(postsDirectory);
-  } catch (err) {
-    console.warn(
-      `Could not read posts directory at ${postsDirectory}. No posts will be loaded. Error: ${err}`
-    );
-    return [];
-  }
-
-  let allPostsData = fileNames.map((fileName) => {
-    const slug = fileName.replace(/\.md$/, "");
-    const fullPath = path.join(postsDirectory, fileName);
-    const fileContents = fs.readFileSync(fullPath, "utf8");
-    const matterResult = matter(fileContents);
-
-    return {
-      slug,
-      ...(matterResult.data as PostFrontmatter),
-    };
-  });
-
-  // 태그가 제공되면 해당 태그를 포함하는 게시물만 필터링합니다.
-  if (tag) {
-    allPostsData = allPostsData.filter(
-      (post) => post.tags && post.tags.includes(tag)
-    );
-  }
-
-  // 게시물을 날짜(date) 기준으로 정렬합니다.
-  return allPostsData.sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-
-    if (sortOrder === "latest") {
-      return dateB - dateA; // 최신순 (내림차순)
-    } else {
-      return dateA - dateB; // 오래된순 (오름차순)
-    }
-  });
-}
-
-// 타입을 정의.
+// 카테고리/태그별 개수
 export interface TagWithCount {
   name: string;
   count: number;
 }
 
-// 모든 고유 태그 목록을 가져오는 함수
-export function getAllUniqueTagsWithCount(): TagWithCount[] {
-  const allPosts = getAllSortedPostsData(); // 필터링 없이 모든 게시물을 가져옵니다.
-  const tagsDict: { [key: string]: number } = {};
-
-  allPosts.forEach((post) => {
-    if (post.tags) {
-      post.tags?.forEach((tag) => {
-        if (tagsDict[tag]) {
-          tagsDict[tag]++;
-        } else {
-          tagsDict[tag] = 1;
-        }
-      });
-    }
-  });
-
-  const sortedTagsWithCount = Object.entries(tagsDict)
-    .map(([name, count]) => ({ name, count })) // 객체 형태로 변환
-    .sort((a, b) => {
-      if (b.count !== a.count) {
-        return b.count - a.count; // 게시물 많은 순
-      }
-      return a.name.localeCompare(b.name); // 이름 순
-    });
-
-  return sortedTagsWithCount;
+// 헬퍼 함수: DB row를 PostData 객체로 매핑
+async function mapDbRowToPostData(row: any): Promise<PostData> {
+  const tags = await getTagsForPost(row.id);
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description || "",
+    date: new Date(row.published_date).toISOString(),
+    featured_image: row.featured_image || undefined,
+    category: row.category || undefined,
+    post_type: row.post_type,
+    notion_last_edited_time: new Date(
+      row.notion_last_edited_time
+    ).toISOString(),
+    tags: tags,
+  };
 }
 
-// 모든 게시물의 slug 목록을 가져오는 함수 (generateStaticParams용) - 기존과 동일
-export function getAllPostSlugs() {
-  // ... (기존 코드와 동일)
-  let fileNames: string[];
+// 헬퍼 함수: 특정 게시물 ID에 연결된 태그 목록 가져오기
+async function getTagsForPost(postId: string): Promise<string[]> {
+  const sql = `
+    SELECT t.name
+    FROM tags t
+    INNER JOIN post_tags pt ON t.id = pt.tag_id
+    WHERE pt.post_id = ?
+  `;
   try {
-    fileNames = fs.readdirSync(postsDirectory);
-  } catch (err) {
-    return [];
+    const results = await queryDb<RowDataPacket[]>(sql, [postId]);
+    return results.map((tagRow: any) => tagRow.name);
+  } catch (error) {
+    console.error(`Error fetching tags for post ${postId}:`, error);
+    return []; // 에러 발생 시 빈 배열 반환
+  }
+}
+
+//
+
+// 모든 게시물의 정렬된 메타데이터를 가져오는 함수 (목록 페이지용)
+// 태그 필터링 기능을 추가합니다.
+export async function getAllSortedPostsData(
+  filterType?: "category" | "tag", // 필터 타입
+  filterValue?: string,
+  sortOrder: "latest" | "oldest" = "latest"
+): Promise<PostData[]> {
+  let sql = `
+    SELECT DISTINCT
+      p.id, p.slug, p.title, p.description, p.published_date,
+      p.featured_image, p.category, p.post_type, p.notion_last_edited_time
+    FROM posts p
+  `;
+  const params: any[] = [];
+
+  if (filterType && filterValue) {
+    if (filterType === "category") {
+      sql += ` WHERE p.category = ?`;
+      params.push(filterValue);
+    } else if (filterType === "tag") {
+      sql += `
+        INNER JOIN post_tags pt ON p.id = pt.post_id
+        INNER JOIN tags t ON pt.tag_id = t.id
+        WHERE t.name = ?
+      `;
+      params.push(filterValue);
+    }
   }
 
-  return fileNames.map((fileName) => {
-    return {
-      slug: fileName.replace(/\.md$/, ""),
-    };
-  });
+  sql += ` ORDER BY p.published_date ${
+    sortOrder === "latest" ? "DESC" : "ASC"
+  }`;
+
+  try {
+    const rows = await queryDb<RowDataPacket[]>(sql, params);
+    // Promise.all을 사용하여 각 row에 대한 mapDbRowToPostData 비동기 호출을 병렬로 처리
+    const posts = await Promise.all(rows.map((row) => mapDbRowToPostData(row)));
+    return posts;
+  } catch (error) {
+    console.error("Error in getAllSortedPostsData:", error);
+    return [];
+  }
 }
 
-// 특정 slug에 해당하는 게시물 데이터(메타데이터 + 본문)를 가져오는 함수 - 기존과 동일
+/**
+ * DB에서 모든 고유 태그와 각 태그에 해당하는 게시물 수를 가져옵니다.
+ */
+export async function getAllUniqueTagsWithCount(): Promise<TagWithCount[]> {
+  const sql = `
+    SELECT t.name, COUNT(pt.post_id) as count
+    FROM tags t
+    INNER JOIN post_tags pt ON t.id = pt.tag_id
+    INNER JOIN posts p ON pt.post_id = p.id
+    GROUP BY t.name
+    ORDER BY count DESC, t.name ASC
+  `;
+  try {
+    const results = await queryDb<RowDataPacket[]>(sql);
+    return results.map((row) => ({
+      name: row.name,
+      count: Number(row.count),
+    }));
+  } catch (error) {
+    console.error("Error in getAllUniqueTagsWithCount:", error);
+    return [];
+  }
+}
+
+/**
+ * DB에서 모든 고유 카테고리와 각 카테고리에 해당하는 게시물 수를 가져옵니다.
+ */
+export async function getAllUniqueCategoriesWithCount(): Promise<
+  TagWithCount[]
+> {
+  const sql = `
+    SELECT category, COUNT(id) as count
+    FROM posts
+    WHERE category IS NOT NULL AND category != ''
+    GROUP BY category
+    ORDER BY count DESC, category ASC
+  `;
+  try {
+    const results = await queryDb<RowDataPacket[]>(sql);
+    return results.map((row) => ({
+      name: row.category,
+      count: Number(row.count),
+    }));
+  } catch (error) {
+    console.error("Error in getAllUniqueCategoriesWithCount:", error);
+    return [];
+  }
+}
+
+/**
+ * DB에서 모든 게시물의 slug 목록을 가져옵니다. (generateStaticParams용)
+ */
+export async function getAllPostSlugs(): Promise<{ slug: string }[]> {
+  const sql = "SELECT slug FROM posts ORDER BY published_date DESC"; // 정렬 추가 (선택 사항)
+  try {
+    const results = await queryDb<RowDataPacket[]>(sql);
+    return results.map((row: any) => ({
+      slug: row.slug,
+    }));
+  } catch (error) {
+    console.error("Error in getAllPostSlugs:", error);
+    return [];
+  }
+}
+
+/**
+ * 특정 slug에 해당하는 게시물 데이터(메타데이터 + 본문)를 DB에서 가져옵니다.
+ */
 export async function getPostDataBySlug(
   slug: string
 ): Promise<PostFullData | null> {
-  // ... (기존 코드와 동일, 반환 타입 PostFullData로 명시)
-  const fullPath = path.join(postsDirectory, `${slug}.md`);
-
+  const sql = `
+    SELECT
+      p.id, p.slug, p.title, p.description, p.content, p.published_date,
+      p.featured_image, p.category, p.post_type, p.notion_last_edited_time
+    FROM posts p
+    WHERE p.slug = ?
+  `;
   try {
-    const fileContents = fs.readFileSync(fullPath, "utf8");
-    const matterResult = matter(fileContents);
+    const rows = await queryDb<RowDataPacket[]>(sql, [slug]);
 
-    return {
-      slug,
-      content: matterResult.content,
-      ...(matterResult.data as PostFrontmatter),
-    };
-  } catch (err) {
-    console.error(`Error reading or parsing post ${slug}: ${err}`);
+    if (rows.length > 0) {
+      const row = rows[0];
+      const basePostData = await mapDbRowToPostData(row);
+      return {
+        ...basePostData,
+        content: row.content || "",
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error in getPostDataBySlug for slug ${slug}:`, error);
     return null;
   }
 }
-
-// 다른 파일에서 import type { PostData } from '@/lib/posts'; 하려면
-// PostData 타입 임포트 (src/lib/posts.ts에 PostData 인터페이스가 export 되어 있어야 함)
-export type { PostData };

@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import errorcode
 import logging
 from . import settings 
+import os
 
 # 로깅 설정
 # 일반적인 print문과는 다름(*)
@@ -343,6 +344,86 @@ def delete_image_info_by_id(image_id):
         return True
     except mysql.connector.Error as err:
         logging.error(f"이미지 정보(ID: {image_id}) 삭제 중 오류 발생: {err}")
+        conn.rollback()
+        return False
+    finally:
+        close_db_connection(conn, cursor)
+
+def get_all_post_ids_from_db():
+    """DB에 저장된 모든 게시물의 ID 목록을 반환합니다."""
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    cursor = conn.cursor()
+    post_ids = []
+    try:
+        cursor.execute("SELECT id FROM posts")
+        results = cursor.fetchall()
+        post_ids = [row[0] for row in results]
+    except mysql.connector.Error as err:
+        logging.error(f"DB에서 모든 게시물 ID 조회 중 오류 발생: {err}")
+    finally:
+        close_db_connection(conn, cursor)
+    return post_ids
+
+
+def delete_post_by_id(post_id):
+    """특정 ID의 게시물을 DB에서 삭제하고, 연관된 로컬 이미지 폴더도 (비어있다면) 삭제 시도합니다."""
+    conn = get_db_connection()
+    if not conn:
+        return False
+
+    cursor = conn.cursor(dictionary=True) # slug를 가져오기 위해 dictionary=True
+    post_slug = None
+    try:
+        # 먼저 slug를 가져옵니다.
+        cursor.execute("SELECT slug FROM posts WHERE id = %s", (post_id,))
+        result = cursor.fetchone()
+        if result:
+            post_slug = result['slug']
+        else:
+            logging.warning(f"DB에서 삭제할 게시물(ID: {post_id})의 slug를 찾지 못했습니다.")
+            # 게시물이 없으면 여기서 False를 반환하거나, 이미지 정리 없이 게시물 삭제만 시도할 수 있습니다.
+            # 여기서는 게시물 자체가 없다고 판단하고 False 반환
+            return False 
+
+        # posts 테이블에서 삭제 (연관된 images, post_tags는 ON DELETE CASCADE로 자동 처리)
+        # cursor를 다시 일반 커서로 사용하거나, 새 커서를 만들어야 할 수 있습니다.
+        # 여기서는 동일 커서를 사용한다고 가정 (mysql.connector.python은 재사용 가능)
+        cursor.execute("DELETE FROM posts WHERE id = %s", (post_id,))
+        conn.commit()
+        
+        deleted_rows = cursor.rowcount
+        if deleted_rows > 0:
+            logging.info(f"게시물(ID: {post_id}, Slug: {post_slug})이 DB에서 삭제되었습니다.")
+            
+            # 이미지 폴더 삭제 시도
+            if post_slug and settings.IMAGE_HOST_STORAGE_PATH:
+                post_image_dir = os.path.join(settings.IMAGE_HOST_STORAGE_PATH, post_slug)
+                if os.path.exists(post_image_dir) and os.path.isdir(post_image_dir):
+                    try:
+                        if not os.listdir(post_image_dir): # 폴더가 비어있는 경우
+                            os.rmdir(post_image_dir)
+                            logging.info(f"게시물 이미지 폴더(비어있음) 삭제됨: {post_image_dir}")
+                        else:
+                            # 이 경우는 cleanup_unused_images_for_post 에서 파일 삭제 후
+                            # 폴더가 비었는지 다시 한번 확인하고 삭제하는 로직이 더 적합할 수 있습니다.
+                            # 또는 cleanup_unused_images_for_post 가 마지막에 폴더를 정리하도록 수정.
+                            logging.info(f"게시물 이미지 폴더에 아직 파일이 남아있어 폴더는 삭제하지 않음: {post_image_dir}")
+                    except OSError as e:
+                        logging.error(f"게시물 이미지 폴더 삭제 중 오류 ({post_image_dir}): {e}")
+            return True
+        else:
+            # 이 경우는 위에서 slug 조회 시 이미 처리되었을 가능성이 높음
+            logging.warning(f"DB에서 삭제할 게시물(ID: {post_id})을 찾지 못했습니다 (DELETE 실행 후).")
+            return False
+    except mysql.connector.Error as err:
+        logging.error(f"게시물(ID: {post_id}) DB 삭제 또는 slug 조회 중 오류 발생: {err}")
+        conn.rollback()
+        return False
+    except Exception as e: # 일반적인 예외 처리
+        logging.error(f"게시물(ID: {post_id}) 처리 중 예기치 않은 오류: {e}")
         conn.rollback()
         return False
     finally:
