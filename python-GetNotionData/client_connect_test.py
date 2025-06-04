@@ -47,7 +47,7 @@ if __name__ == "__main__":
         thread = threading.Thread(target=connect_to_server, args=(i + 1,))
         threads.append(thread)
         thread.start() 
-        # time.sleep(0.1) # 스레드 생성 간 아주 약간의 딜레이
+        time.sleep(0.01) # 스레드 생성 간 아주 약간의 딜레이
 
     for thread in threads:
         thread.join()

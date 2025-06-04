@@ -71,7 +71,7 @@ def init_db_schema():
 
     images_table_sql = """
     CREATE TABLE IF NOT EXISTS images (
-        id CHAR(36) PRIMARY KEY,
+        id CHAR(100) PRIMARY KEY,
         post_id CHAR(36) NOT NULL,
         local_path VARCHAR(512) NOT NULL,
         web_path VARCHAR(512) UNIQUE NOT NULL,

@@ -91,7 +91,7 @@ if __name__ == "__main__":
         thread = threading.Thread(target=worker_task, args=(i + 1, post_id_for_thread))
         threads.append(thread)
         thread.start()
-        time.sleep(0.05) # 스레드 생성 간 약간의 딜레이 (선택적)
+        time.sleep(0.02) # 스레드 생성 간 약간의 딜레이 (선택적)
 
     for thread in threads:
         thread.join()

@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Filter, // 필터 아이콘 추가
 } from "lucide-react"; //
+import CategoryLinkClient from "@/components/ui/CategoryLinkClient";
 
 // ISR revalidate 시간 설정
 export const revalidate = 3600; // 예시로 1시간
@@ -140,15 +141,7 @@ export default async function BlogPage({
                         <span>{formatDate(post.date)}</span>
                       </div>
                       {post.category && (
-                        <Link
-                          href={`/blog?filterType=category&filterValue=${encodeURIComponent(
-                            post.category
-                          )}`}
-                          className="flex items-center gap-1 hover:text-purple-300 transition-colors"
-                        >
-                          <TagIcon size={14} className="text-purple-400" />
-                          <span className="truncate">{post.category}</span>
-                        </Link>
+                        <CategoryLinkClient category={post.category} />
                       )}
                     </div>
                     <h3 className="text-lg md:text-xl font-semibold text-white mb-2 leading-snug group-hover:text-cyan-300 transition-colors duration-200 flex-grow min-h-[2.8em] line-clamp-2">

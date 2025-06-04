@@ -7,7 +7,7 @@ services:
       context: ./nextjs-blog # Dockerfile이 있는 경로
       dockerfile: Dockerfile
     ports:
-      - "3000:3000" # 호스트_포트:컨테이너_포트
+      - "8080:3000" # 호스트_포트:컨테이너_포트
     environment:
       # Next.js 앱에서 사용할 환경 변수 (DB 접속 정보, 이미지 경로 등)
       # 실제 값은 .env 파일을 사용하거나, 운영 환경에서는 직접 주입합니다.
@@ -21,15 +21,17 @@ services:
       # 이 경로는 아래 volumes 설정에서 컨테이너 내부 마운트 경로와 일치해야 합니다.
       - IMAGE_HOST_STORAGE_PATH=/app/mounted_images
       # 기타 필요한 환경 변수 (예: NEXT_PUBLIC_SITE_URL)
-      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-http://localhost:8080}
     volumes:
       # 개발 환경: 소스 코드 변경 실시간 반영 (hot-reloading)
       # 운영 환경에서는 이 부분을 제거하고 빌드된 이미지만 사용합니다.
       - ./nextjs-blog:/app
       - /app/node_modules # node_modules는 호스트와 동기화하지 않도록 하여 충돌 방지
       - /app/.next # .next 폴더도 호스트와 동기화하지 않도록
-
       # 이미지 저장소 볼륨 마운트
+      - /srvData/dev_blog/images:/app/mounted_images
+
+      
       # <호스트_이미지_저장_경로>를 실제 경로로 변경해야 합니다.
       # Python 스크립트의 IMAGE_HOST_STORAGE_PATH 설정과 일치시켜야 합니다.
       # 예: /var/www/myblog_images (호스트) -> /app/mounted_images (컨테이너)
@@ -74,30 +76,30 @@ services:
       retries: 5
 
   # Python 스크립트 실행 서비스 (선택 사항)
-  # python-script:
-  #   build:
-  #     context: ./python-GetNotionData # Python 스크립트 프로젝트 경로
-  #     dockerfile: Dockerfile # Python용 Dockerfile 별도 생성 필요
-  #   environment:
-  #     - NOTION_API_KEY=${NOTION_API_KEY}
-  #     - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
-  #     - DB_HOST=mysql-db
-  #     - DB_USER=${DB_USER}
-  #     - DB_PASSWORD=${DB_PASSWORD}
-  #     - DB_NAME=${DB_NAME}
-  #     - DB_PORT=${DB_PORT:-3306}
-  #     - IMAGE_HOST_STORAGE_PATH=/app/images # 컨테이너 내부 경로
-  #   volumes:
-  #     - ./python-GetNotionData:/app/script # 스크립트 코드 마운트
-  #     - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/images # 이미지 저장소 마운트 (nextjs-app과 동일한 호스트 경로 매핑)
-  #     - ./python-GetNotionData/.env:/app/script/.env # .env 파일 마운트
-  #   depends_on:
-  #     mysql-db:
-  #       condition: service_healthy # DB가 healthy 상태가 된 후 실행
-  #   # Python 스크립트를 주기적으로 실행하려면 Docker 컨테이너 내부에 cron을 설치하거나,
-  #   # Docker 외부(호스트)에서 cron으로 `docker-compose run --rm python-script python main.py` 등을 실행
-  #   networks:
-  #     - my_blog_network
+  python-script:
+    build:
+      context: ./python-GetNotionData # Python 스크립트 프로젝트 경로
+      dockerfile: Dockerfile # Python용 Dockerfile 별도 생성 필요
+    environment:
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
+      - DB_HOST=mysql-db
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT:-3306}
+      - IMAGE_HOST_STORAGE_PATH=/app/images # 컨테이너 내부 경로
+    volumes:
+      - ./python-GetNotionData:/app/script # 스크립트 코드 마운트
+      - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images # 이미지 저장소 마운트 (nextjs-app과 동일한 호스트 경로 매핑)
+      - ./python-GetNotionData/.env:/app/script/.env # .env 파일 마운트
+    depends_on:
+      mysql-db:
+        condition: service_healthy # DB가 healthy 상태가 된 후 실행
+    # Python 스크립트를 주기적으로 실행하려면 Docker 컨테이너 내부에 cron을 설치하거나,
+    # Docker 외부(호스트)에서 cron으로 `docker-compose run --rm python-script python main.py` 등을 실행
+    networks:
+      - my_blog_network
 
 # Docker 네트워크 정의
 networks:
