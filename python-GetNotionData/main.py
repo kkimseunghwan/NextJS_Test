@@ -51,7 +51,32 @@ def process_single_post(notion_client, page_data):
 
     logging.info(f"'{post_title}' (ID: {page_id}) 게시물 처리 시작 (DB 업데이트 필요).")
 
-    # 3. 게시물 본문 마크다운 변환 및 본문 내 이미지 처리
+
+    # 순서 수정
+
+    # 3. 게시물 기본 정보 DB에 저장/업데이트 (이미지 경로 없이 먼저)
+    #    featured_image 필드는 나중에 이미지 처리 후 업데이트하거나, 초기에는 NULL 또는 빈 값으로 저장
+    post_data_for_db_initial = {
+        'id': page_id,
+        'slug': post_slug,
+        'title': post_title,
+        'description': parsed_props.get('description'),
+        'content': "# Placeholder for content, will be updated after image processing", # 임시 값 또는 빈 값
+        'post_type': parsed_props['post_type'],
+        'category': parsed_props.get('category'),
+        'published_date': parsed_props['published_date'],
+        'featured_image': None, # 초기에는 대표 이미지 경로 없음
+        'notion_last_edited_time': notion_last_edited_time_str_from_api 
+    }
+
+    if not db_Manager.upsert_post(post_data_for_db_initial):
+        logging.error(f"'{post_title}' (ID: {page_id}) 게시물 기본 정보 DB 저장 실패. 이 페이지를 건너뜁니다.")
+        return
+
+    logging.info(f"'{post_title}' (ID: {page_id}) 게시물 기본 Normal 정보 저장")
+
+
+    # 4. 게시물 본문 마크다운 변환 및 본문 내 이미지 처리
     # convert_blocks_to_markdown 함수는 내부적으로 image_handler.download_and_save_image 호출
     markdown_content, used_image_block_ids_from_content = convert_blocks_to_markdown(
         notion_client_instance=notion_client,
@@ -81,6 +106,12 @@ def process_single_post(notion_client, page_data):
             logging.info(f"'{post_title}' 커버 이미지 처리 완료: {featured_image_web_path}")
         else:
             logging.warning(f"'{post_title}' 커버 이미지 처리 실패.")
+            logging.warning(f"{parsed_props['cover_image_url']}")    
+            logging.warning(f"{cover_image_id_for_db}")
+            logging.warning(f"{page_id}")
+            logging.warning(f"{post_slug}")
+            logging.warning(f"isCover = {is_cover}")
+            logging.warning("")
 
 
     # 5. DB에 저장할 게시물 데이터 준비

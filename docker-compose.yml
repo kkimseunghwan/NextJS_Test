@@ -1,18 +1,17 @@
-version: "3.8" # Docker Compose 파일 형식 버전
-
 services:
-  # Next.js 애플리케이션 서비스
   nextjs-app:
     build:
       context: ./nextjs-blog # Dockerfile이 있는 경로
       dockerfile: Dockerfile
-    ports:
-      - "8080:3000" # 호스트_포트:컨테이너_포트
+    network_mode: "host"
+#    ports:
+#      - "8080:3000" # 호스트_포트:컨테이너_포트
     environment:
       # Next.js 앱에서 사용할 환경 변수 (DB 접속 정보, 이미지 경로 등)
       # 실제 값은 .env 파일을 사용하거나, 운영 환경에서는 직접 주입합니다.
-      - NODE_ENV=development # 개발 시에는 development, 운영 시에는 production
-      - DB_HOST=mysql-db # docker-compose 내의 서비스 이름으로 DB 호스트 지정
+      - NODE_ENV=production # 개발 시에는 development, 운영 시에는 production
+#      - DB_HOST=mysql-db # docker-compose 내의 서비스 이름으로 DB 호스트 지정
+      - DB_HOST=127.0.0.1
       - DB_USER=${DB_USER} # 호스트의 .env 파일에서 값을 가져올 수 있음
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
@@ -25,23 +24,22 @@ services:
     volumes:
       # 개발 환경: 소스 코드 변경 실시간 반영 (hot-reloading)
       # 운영 환경에서는 이 부분을 제거하고 빌드된 이미지만 사용합니다.
-      - ./nextjs-blog:/app
-      - /app/node_modules # node_modules는 호스트와 동기화하지 않도록 하여 충돌 방지
-      - /app/.next # .next 폴더도 호스트와 동기화하지 않도록
+      # - ./nextjs-blog:/app
+      # - /app/node_modules # node_modules는 호스트와 동기화하지 않도록 하여 충돌 방지
+      # - /app/.next # .next 폴더도 호스트와 동기화하지 않도록
       # 이미지 저장소 볼륨 마운트
-      - /srvData/dev_blog/images:/app/mounted_images
+      # - /srvData/dev_blog/images:/app/mounted_images
 
       
       # <호스트_이미지_저장_경로>를 실제 경로로 변경해야 합니다.
       # Python 스크립트의 IMAGE_HOST_STORAGE_PATH 설정과 일치시켜야 합니다.
       # 예: /var/www/myblog_images (호스트) -> /app/mounted_images (컨테이너)
       - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images
-    depends_on:
-      - mysql-db # DB 서비스가 먼저 시작되도록 설정
-    networks:
-      - my_blog_network
+  #    depends_on:
+  #    - mysql-db # DB 서비스가 먼저 시작되도록 설정
+  #  networks:
+  #    - my_blog_network
 
-  # MySQL 데이터베이스 서비스
   mysql-db:
     image: mysql:8.0 # MySQL 공식 이미지 사용
     ports:
@@ -88,11 +86,11 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - DB_PORT=${DB_PORT:-3306}
-      - IMAGE_HOST_STORAGE_PATH=/app/images # 컨테이너 내부 경로
+      - IMAGE_HOST_STORAGE_PATH=/app/mounted_images # 컨테이너 내부 경로
     volumes:
-      - ./python-GetNotionData:/app/script # 스크립트 코드 마운트
+      # - ./python-GetNotionData:/app/script # 스크립트 코드 마운트
       - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images # 이미지 저장소 마운트 (nextjs-app과 동일한 호스트 경로 매핑)
-      - ./python-GetNotionData/.env:/app/script/.env # .env 파일 마운트
+      # - ./python-GetNotionData/.env:/app/script/.env # .env 파일 마운트
     depends_on:
       mysql-db:
         condition: service_healthy # DB가 healthy 상태가 된 후 실행

@@ -11,7 +11,7 @@ NOTION_API_KEY = os.environ.get('NOTION_API_KEY')
 NOTION_DATABASE_ID = os.environ.get('NOTION_DATABASE_ID')
 
 # MySQL DB Connection Info
-DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_HOST = os.environ.get('DB_HOST', 'mysql_db')
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_NAME = os.environ.get('DB_NAME')
