@@ -1,0 +1,45 @@
+# Dockerfile (Final Recommended Version)
+
+# -----------------
+# 1. 빌드 환경 설정 (Builder)
+# -----------------
+# 베이스 이미지로 호환성이 뛰어난 'bookworm-slim' 버전을 사용합니다.
+FROM node:20-bookworm-slim AS builder
+
+# 작업 디렉터리 설정
+WORKDIR /app
+
+# 의존성 설치를 위해 package.json과 lock 파일 먼저 복사 (Docker 캐시 활용)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# 프로젝트 전체 파일 복사
+COPY . .
+
+# Next.js 애플리케이션을 빌드합니다.
+# 이 때, next.config.ts의 'output: "standalone"' 설정이 빛을 발합니다.
+RUN npm run build
+
+
+# -----------------
+# 2. 프로덕션 실행 환경 설정 (Runner)
+# -----------------
+# 최종 실행 이미지는 다시 깨끗하고 가벼운 이미지로 시작합니다.
+FROM node:20-bookworm-slim AS runner
+
+WORKDIR /app
+
+# 프로덕션 환경임을 명시합니다. (Next.js 최적화를 위해 필수)
+ENV NODE_ENV=production
+
+# 'builder' 스테이지에서 생성된 'standalone' 빌드 결과물만 복사합니다.
+# 이 덕분에 node_modules 전체를 복사할 필요가 없어 이미지가 매우 가벼워집니다.
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# Next.js는 기본적으로 3000번 포트를 사용합니다.
+EXPOSE 3000
+
+# standalone 폴더 내의 server.js를 직접 실행하여 앱을 구동합니다.
+CMD ["node", "server.js"]
