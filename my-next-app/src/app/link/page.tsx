@@ -1,6 +1,6 @@
-// app/page.js
 
-import Link from 'next/link'; // 1. next/link에서 Link를 가져옵니다.
+// 1. next/link에서 Link를 가져옵니다.
+import Link from 'next/link'; 
 
 export default function Home() {
   return (
@@ -9,7 +9,7 @@ export default function Home() {
 
       {/* 2. a 태그 대신 Link 태그를 사용합니다. */}
       <Link href="/">
-        제 프로필 보러가기
+        메인 페이지로 돌아가기
       </Link>
     </main>
   );

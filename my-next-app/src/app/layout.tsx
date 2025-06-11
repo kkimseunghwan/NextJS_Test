@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import Sidebar from "@/components/layout/Sidebar";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,11 +25,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="ko" className={`${geistSans.className} antialiased`}>
+      <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50">
+        <div className="flex">
+          
+          {/* 왼쪽 사이드바 */}
+          <div className="hidden md:flex md:w-64 lg:w-64 flex-col fixed inset-y-0 z-40">
+            <Sidebar />
+          </div>
+
+          {/* 오른쪽 메인 영역 */}
+          <div className="flex-1 flex flex-col md:ml-64 lg:ml-64">
+            {/* 메인 화면 */}
+            <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+              {children}
+            </div>
+
+            {/* 푸터 */}
+            <footer className="p-4 text-right bg-black text-xs text-gray-400 border-t border-gray-700">
+              © 2025 Dev_Cong. All rights reserved.
+            </footer>
+          </div>
+        </div>
       </body>
     </html>
   );

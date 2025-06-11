@@ -1,0 +1,10 @@
+
+services:
+  my-next-app:
+    build:
+      context: ./my-next-app
+      dockerfile: Dockerfile
+    image: my-next-app
+    container_name: my-app-container
+    ports:
+      - "8080:3000"
