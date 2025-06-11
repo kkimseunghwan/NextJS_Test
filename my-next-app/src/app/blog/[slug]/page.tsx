@@ -7,16 +7,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-
-type Props = {
-  params: {
-    slug: string; // params 안에는 string 타입의 slug가 들어있을 거야!
-  }
-}
-
-
-
-export default async function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage({ params }: {params: {slug: string};}) {
 //   const slug = params.slug;
 
   return (
