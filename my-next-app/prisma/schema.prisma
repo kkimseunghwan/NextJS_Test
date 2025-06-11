@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User 모델(테이블)을 정의
+model User {
+  id        String   @id @default(cuid()) // 고유 ID (기본키), cuid()는 고유 ID를 자동 생성
+  email     String   @unique // 이메일 (중복 불가)
+  name      String?  // 이름 (필수가 아님을 의미하는 '?')
+  password  String   // 비밀번호
+  createdAt DateTime @default(now()) // 생성일시 (자동 생성)
+  updatedAt DateTime @updatedAt // 수정일시 (자동 업데이트)
+}

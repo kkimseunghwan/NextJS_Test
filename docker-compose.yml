@@ -8,3 +8,33 @@ services:
     container_name: my-app-container
     ports:
       - "8080:3000"
+    # volumes:
+    #   - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images
+    depends_on:
+      - mysqlDB
+    networks:
+      - my_blog_network
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+
+  mysqlDB:
+    image: mysql:8.0
+    container_name: my-sql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_blog_data:/var/lib/mysql
+    networks:
+      - my_blog_network
+
+# Docker 네트워크 정의
+networks:
+  my_blog_network:
+    driver: bridge
+    
+volumes:
+  mysql_blog_data:
+
