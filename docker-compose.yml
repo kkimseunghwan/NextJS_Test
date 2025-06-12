@@ -15,7 +15,10 @@ services:
     networks:
       - my_blog_network
     environment:
+      - IMAGE_HOST_STORAGE_PATH=/app/mounted_images
       - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images
 
   mysqlDB:
     image: mysql:8.0
@@ -27,6 +30,26 @@ services:
       - "3307:3306"
     volumes:
       - mysql_blog_data:/var/lib/mysql
+    networks:
+      - my_blog_network
+
+  python-script:
+    build:
+      context: ./python-GetNotionData
+      dockerfile: Dockerfile
+    environment:
+      - NOTION_API_KEY=${NOTION_API_KEY}
+      - NOTION_DATABASE_ID=${NOTION_DATABASE_ID}
+      - DB_HOST=mysqlDB
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - IMAGE_HOST_STORAGE_PATH=/app/mounted_images
+    volumes:
+      - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images
+    depends_on:
+      - mysqlDB
     networks:
       - my_blog_network
 
