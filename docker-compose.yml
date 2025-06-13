@@ -14,9 +14,15 @@ services:
       - mysqlDB
     networks:
       - my_blog_network
+    env_file:
+      - .env
     environment:
       - IMAGE_HOST_STORAGE_PATH=/app/mounted_images
       - DATABASE_URL=${DATABASE_URL}
+      - MYSQL_HOST=mysqlDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
     volumes:
       - ${IMAGE_HOST_STORAGE_PATH_ON_HOST}:/app/mounted_images
 

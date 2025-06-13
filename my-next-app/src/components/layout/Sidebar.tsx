@@ -1,3 +1,5 @@
+// components/Sidebar.tsx
+'use client';
 
 import Link from "next/link";
 import Image from "next/image";
@@ -8,11 +10,95 @@ import {
   Home,
   Github,
   BookMarked,
+  LayoutGrid,
 } from "lucide-react";
 
+import { useState, useEffect } from "react";
+
+interface DbStatus {
+  isConnected: boolean;
+  loading: boolean;
+  error?: string;
+}
+
+interface Category {
+  category: string;
+  count: number;
+}
 
 // Sidebar는 서버 컴포넌트이므로 async/await를 사용하여 데이터 페칭 가능
-export default async function Sidebar() {
+export default function Sidebar() {
+
+  const [dbStatus, setDbStatus] = useState<DbStatus>({
+    isConnected: false,
+    loading: true
+  });
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  const checkDbConnection = async () => {
+    try {
+      const response = await fetch('/api/test-db');
+      const data = await response.json();
+
+      setDbStatus({
+        isConnected: data.success,
+        loading: false,
+        error: data.success ? undefined : data.message
+      });
+    } catch {
+      setDbStatus({
+        isConnected: false,
+        loading: false,
+        error: '연결 확인 실패'
+      });      
+    }
+  }
+
+  // 카테고리 데이터 로드
+  const loadCategories = async () => {
+    if (!dbStatus.isConnected) {
+      setCategoriesLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/categories');
+      if (response.ok) {
+        const data = await response.json();
+        // 필드명 변환
+        if (data.success && Array.isArray(data.data)) {
+          setCategories(
+            data.data.map((item: Category) => ({
+              category: item.category,
+              count: item.count,
+            }))
+          );
+        } else {
+          setCategories([]);
+        }
+      }
+    } catch (error) {
+      console.error('카테고리 로드 실패:', error);
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 DB 연결 확인
+  useEffect(() => {
+    checkDbConnection();
+  }, []);
+
+  // DB 연결 성공 시 카테고리 로드
+  useEffect(() => {
+    if (dbStatus.isConnected && !dbStatus.loading) {
+      loadCategories();
+    }
+  });
+
 
   return (
     <aside className="w-full h-full p-5 flex flex-col bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 relative overflow-y-auto overflow-x-hidden no-scrollbar">
@@ -99,6 +185,61 @@ export default async function Sidebar() {
       </nav>
 
       {/* Categories Section */}
+      <div className="mb-8">
+        {" "}
+        {/* Tags 섹션과의 구분을 위해 mb-8 추가 */}
+        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">
+          ◆ CATEGORIES
+        </div>
+        <div className="bg-gradient-to-br from-slate-800/40 to-slate-700/40 backdrop-blur-sm border border-slate-600/30 rounded-2xl p-3">
+          <ul className="space-y-1">
+            <li>
+              <Link
+                href="/blog" // 전체보기는 필터 없이
+                className="group flex items-center px-3 py-2.5 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 rounded-lg transition-all duration-200"
+              >
+                <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full mr-3 opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all"></div>
+                <LayoutGrid className="w-4 h-4 mr-2 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                <span className="text-sm text-slate-400 group-hover:text-slate-200 font-medium">
+                  전체 보기
+                </span>
+              </Link>
+            </li>
+            { (!dbStatus.isConnected || categoriesLoading) ? (
+              <></>
+            ) : categories.length > 0 ? (
+              categories.map((category) => (
+                <li key={category.category}>
+                  <Link
+                    href={`/blog`} 
+                    // /blog?filterType=category&filterValue=${encodeURIComponent(category.name)}`
+                    // 카테고리 필터링 링크는 이후 추가 구현 예정
+                    className="group flex items-center px-3 py-2.5 hover:bg-gradient-to-r hover:from-slate-700/50 hover:to-slate-600/50 rounded-lg transition-all duration-200"
+                  >
+                    <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full mr-3 opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all"></div>
+                    <LayoutGrid className="w-4 h-4 mr-2 text-slate-500 group-hover:text-slate-300 transition-colors" />
+                    <span className="text-sm text-slate-400 group-hover:text-slate-200 font-medium">
+                      {category.category}
+                    </span>
+                    <div className="ml-auto">
+                      <span className="px-2 py-0.5 bg-slate-700 group-hover:bg-cyan-500/30 text-slate-400 group-hover:text-cyan-300 rounded-full text-[0.7rem] font-mono transition-colors duration-150">
+                        {category.count}
+                      </span>
+                    </div>
+
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
+                카테고리가 없습니다
+              </div>
+            )}
+
+          </ul>
+        </div>
+      </div>
+
 
       {/* Tags Section */}
 
@@ -107,8 +248,17 @@ export default async function Sidebar() {
         <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
         <div className="text-center pt-4">
           <div className="inline-flex items-center gap-2 text-xs text-slate-500">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            SYSTEM ONLINE
+            {dbStatus.isConnected ? (
+              <>
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>DB SYSTEM CONNECT</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span>DB SYSTEM DISCONNECT</span>
+              </>
+            )}
           </div>
         </div>
       </div>
