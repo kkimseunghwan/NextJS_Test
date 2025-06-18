@@ -118,11 +118,17 @@ def init_db_schema():
         logging.info("'tags' 테이블이 준비되었습니다.")
         cursor.execute(post_tags_table_sql)
         logging.info("'post_tags' 테이블이 준비되었습니다.")
+        cursor.execute("ALTER TABLE posts ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id)")
+        logging.info("categories 외래 키 제약 조건 추가가 성공적으로 완료되었습니다.")
         conn.commit()
-        logging.info("DB 스키마 초기화가 성공적으로 완료되었습니다.")
+        logging.info("commit 완료: 모든 테이블이 성공적으로 생성되었습니다.")
     except mysql.connector.Error as err:
-        logging.error(f"테이블 생성 중 오류 발생: {err}")
-        conn.rollback() # 오류 발생 시 롤백
+        # 이미 제약 조건이 존재하는 경우 발생하는 에러(1826)는 무시합니다.
+        if err.errno == 1826:
+            pass
+        else:
+            logging.error(f"테이블 생성 중 오류 발생: {err}")
+            conn.rollback() # 오류 발생 시 롤백
     finally:
         close_db_connection(conn, cursor)
 
@@ -136,10 +142,11 @@ def upsert_post(post_data):
     cursor = conn.cursor()
 
     # 카테고리 이름으로 ID를 가져오거나 생성
-    category_id = get_or_create_category_id(post_data['category'])
+    logging.info(f"포스트 정보 표시 '{post_data}'")
+    category_id = get_or_create_category_id(cursor, post_data['category'])
 
     sql = """
-    INSERT INTO posts (id, slug, title, description, content, post_type, category, published_date, featured_image, notion_last_edited_time)
+    INSERT INTO posts (id, slug, title, description, content, post_type, category_id, published_date, featured_image, notion_last_edited_time)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE
         slug = VALUES(slug),
@@ -147,7 +154,7 @@ def upsert_post(post_data):
         description = VALUES(description),
         content = VALUES(content),
         post_type = VALUES(post_type),
-        category = VALUES(category),
+        category_id = VALUES(category_id),
         published_date = VALUES(published_date),
         featured_image = VALUES(featured_image),
         notion_last_edited_time = VALUES(notion_last_edited_time),

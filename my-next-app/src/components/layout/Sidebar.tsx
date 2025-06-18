@@ -22,7 +22,7 @@ interface DbStatus {
 }
 
 interface Category {
-  category: string;
+  name: string;
   count: number;
 }
 
@@ -71,7 +71,7 @@ export default function Sidebar() {
         if (data.success && Array.isArray(data.data)) {
           setCategories(
             data.data.map((item: Category) => ({
-              category: item.category,
+              name: item.name,
               count: item.count,
             }))
           );
@@ -209,7 +209,7 @@ export default function Sidebar() {
               <></>
             ) : categories.length > 0 ? (
               categories.map((category) => (
-                <li key={category.category}>
+                <li key={category.name}>
                   <Link
                     href={`/blog`} 
                     // /blog?filterType=category&filterValue=${encodeURIComponent(category.name)}`
@@ -219,7 +219,7 @@ export default function Sidebar() {
                     <div className="w-2 h-2 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full mr-3 opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all"></div>
                     <LayoutGrid className="w-4 h-4 mr-2 text-slate-500 group-hover:text-slate-300 transition-colors" />
                     <span className="text-sm text-slate-400 group-hover:text-slate-200 font-medium">
-                      {category.category}
+                      {category.name}
                     </span>
                     <div className="ml-auto">
                       <span className="px-2 py-0.5 bg-slate-700 group-hover:bg-cyan-500/30 text-slate-400 group-hover:text-cyan-300 rounded-full text-[0.7rem] font-mono transition-colors duration-150">

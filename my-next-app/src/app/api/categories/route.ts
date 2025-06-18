@@ -3,18 +3,26 @@ import { executeQuery } from '@/lib/db';
 import { RowDataPacket } from 'mysql2';
 
 interface Category extends RowDataPacket{
-  category: string;
+  name: string;
   count: number;
 }
 
 export async function  GET() {
     try {
+        // const categories = await executeQuery<Category> (`
+        //     SELECT category, COUNT(id) as count
+        //     FROM posts
+        //     WHERE category IS NOT NULL AND category != ''
+        //     GROUP BY category
+        //     ORDER BY count DESC, category ASC
+        // `);
         const categories = await executeQuery<Category> (`
-            SELECT category, COUNT(id) as count
-            FROM posts
-            WHERE category IS NOT NULL AND category != ''
-            GROUP BY category
-            ORDER BY count DESC, category ASC
+            SELECT 
+                c.name, 
+                (SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id) as count
+            FROM categories c
+            WHERE (SELECT COUNT(*) FROM posts p WHERE p.category_id = c.id) > 0
+            ORDER BY count DESC, c.name ASC
         `);
 
         return NextResponse.json({
