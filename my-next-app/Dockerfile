@@ -43,3 +43,72 @@ EXPOSE 3000
 
 # standalone 폴더 내의 server.js를 직접 실행하여 앱을 구동합니다.
 CMD ["node", "server.js"]
+
+
+# -----------------
+
+
+# # 914MB 메모리 서버를 위한 초최적화 Dockerfile
+# FROM node:18-alpine AS base
+# RUN apk add --no-cache libc6-compat
+
+# # 의존성 설치 단계
+# FROM base AS deps
+# WORKDIR /app
+# COPY package*.json ./
+# # 개발 의존성 제외하고 설치
+# RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+# # 빌드 단계 - 극한 메모리 최적화
+# FROM base AS builder
+# WORKDIR /app
+# COPY --from=deps /app/node_modules ./node_modules
+# COPY . .
+
+# # 극한 메모리 제한 (914MB 서버용)
+# ENV NODE_ENV=production
+# ENV NEXT_TELEMETRY_DISABLED=1
+# # 메모리 사용량을 512MB로 제한
+# ENV NODE_OPTIONS="--max-old-space-size=512 --optimize-for-size"
+
+# # Next.js 설정에서 메모리 최적화
+# RUN echo 'module.exports = { \
+#   output: "standalone", \
+#   experimental: { optimizePackageImports: ["lucide-react"] }, \
+#   images: { unoptimized: true }, \
+#   compiler: { removeConsole: true }, \
+#   webpack: (config) => { \
+#     config.optimization.minimize = true; \
+#     config.cache = false; \
+#     return config; \
+#   } \
+# }' > next.config.js
+
+# # 병렬 처리 제한하여 빌드
+# RUN npm run build || (echo "Build failed, trying with more restrictions..." && \
+#     NODE_OPTIONS="--max-old-space-size=400 --optimize-for-size" npm run build)
+
+# # 런타임 단계 - 최소 이미지
+# FROM node:18-alpine AS runner
+# WORKDIR /app
+
+# ENV NODE_ENV=production
+# ENV NEXT_TELEMETRY_DISABLED=1
+# # 런타임은 더 적은 메모리 사용
+# ENV NODE_OPTIONS="--max-old-space-size=256"
+
+# RUN addgroup --system --gid 1001 nodejs
+# RUN adduser --system --uid 1001 nextjs
+
+# # 빌드 결과물만 복사
+# COPY --from=builder /app/public ./public
+# COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# USER nextjs
+
+# EXPOSE 3000
+# ENV PORT 3000
+# ENV HOSTNAME "0.0.0.0"
+
+# CMD ["node", "server.js"]
