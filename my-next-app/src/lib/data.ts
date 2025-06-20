@@ -2,7 +2,7 @@ import { executeQuery } from './db';
 import type { Post } from '@/types/post';
 
 // 한 페이지에 표시할 게시글 수
-const POSTS_PER_PAGE = 1;
+const POSTS_PER_PAGE = 12;
 
 interface PostsResponse {
   posts: Post[];
@@ -35,23 +35,6 @@ export async function getPosts(currentPage: number = 1): Promise<PostsResponse> 
             LIMIT ${limit} OFFSET ${offset}`;
     
         const postsResult = await executeQuery(postsQuery);
-
-
-        //     // 2. 현재 페이지에 해당하는 게시글 목록 조회
-        // const offset = (currentPage - 1) * POSTS_PER_PAGE;
-        // // 사용자가 수정한 쿼리를 그대로 사용합니다. (ORDER BY notion_last_edited_time)
-        // const postsQuery = `
-        //     SELECT 
-        //         p.id, p.notion_page_id, p.title, p.slug, p.summary, p.last_edited_time as notion_last_edited_time,
-        //         c.name as category_name 
-        //     FROM posts p
-        //     LEFT JOIN categories c ON p.category_id = c.id
-        //     ORDER BY p.last_edited_time DESC 
-        //     LIMIT ? OFFSET ?`;
-        
-        // // ❗ 수정됨: 'Published' 파라미터를 제거합니다.
-        // const postsParams = [POSTS_PER_PAGE, offset];
-        // const [postsResult] = await db.query(postsQuery, postsParams);
 
         return {
             posts: postsResult as Post[],

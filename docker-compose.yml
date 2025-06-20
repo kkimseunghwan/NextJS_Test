@@ -11,10 +11,10 @@ services:
     container_name: my-app-container
     ports:
       - "8080:3000"
-    # 런타임 리소스 제한
+    # 런타임 리소스 제한 (mem_swap_limit 제거)
     mem_limit: 400m
     mem_reservation: 200m
-    mem_swap_limit: 600m
+    # mem_swap_limit: 600m  # 이 줄을 제거하거나 주석 처리
     cpus: '0.7'
     # 공유 메모리 제한
     shm_size: '128m'
