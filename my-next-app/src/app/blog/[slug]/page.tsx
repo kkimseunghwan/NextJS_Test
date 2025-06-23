@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+// import remarkGfm from "remark-gfm";
 // import rehypeRaw from 'rehype-raw';
 import { getPostDataSQL } from "@/lib/postData";
 
@@ -12,11 +12,34 @@ import {
   Tag as TagIcon,
   ArrowLeft,
 } from "lucide-react";
+import remarkGfm from "remark-gfm";
 
 // 타입 정의
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+const md = `
+# This is a H1
+## This is a H2
+### This is a H3
+#### This is a H4
+##### This is a H5
+###### This is a H6
+
+1. first
+2. second
+3. third
+
+* 안녕하세요.
+* hi
+* 하이
+
+# 할 일
+* [x] 개발하기
+* [ ] 테스트하기
+* [ ] ~~배포하기~~
+`;
 
 export default async function BlogPostPage({ params: paramsPromise }: Props) {
     try {
@@ -96,30 +119,12 @@ export default async function BlogPostPage({ params: paramsPromise }: Props) {
                         </div>
 
                         {/* 본문 */}
-                        <article
-                        className="
-                            prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl  
-                            prose-invert 
-                            prose-headings:font-semibold prose-headings:text-slate-100 prose-headings:border-b prose-headings:border-slate-700 prose-headings:pb-2 prose-headings:mb-4 prose-headings:mt-8
-                            prose-h1:text-3xl sm:prose-h1:text-4xl 
-                            prose-h2:text-2xl sm:prose-h2:text-3xl
-                            prose-h3:text-xl sm:prose-h3:text-2xl
-                            prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-base prose-p:mb-5
-                            prose-a:text-cyan-400 hover:prose-a:text-cyan-300 prose-a:transition-colors prose-a:duration-150 prose-a:font-medium
-                            prose-strong:text-slate-100 prose-strong:font-semibold
-                            prose-blockquote:border-l-4 prose-blockquote:border-cyan-500 prose-blockquote:text-slate-400 prose-blockquote:not-italic prose-blockquote:pl-4 prose-blockquote:py-1 prose-blockquote:my-6
-                            prose-code:bg-slate-800 prose-code:text-rose-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:font-mono prose-code:text-sm
-                            prose-pre:bg-slate-800/70 prose-pre:border prose-pre:border-slate-700 prose-pre:rounded-lg prose-pre:shadow-lg prose-pre:p-0 prose-pre:text-sm
-                            prose-li:text-base prose-li:text-slate-300 prose-li:my-1
-                            prose-ul:list-disc prose-ul:pl-6 prose-ul:my-4
-                            prose-ol:list-decimal prose-ol:pl-6 prose-ol:my-4
-                            prose-img:rounded-lg prose-img:shadow-md prose-img:my-6 
-                            max-w-none 
-                        "
-                        >
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <article>
+                            <ReactMarkdown>
                                 {post.content}
                             </ReactMarkdown>
+                            <ReactMarkdown>{md}</ReactMarkdown>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
                         </article>
 
                         {/* 게시물 메타 정보 */}
