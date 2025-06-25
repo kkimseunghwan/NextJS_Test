@@ -60,7 +60,7 @@ def init_db_schema():
         description TEXT,
         content MEDIUMTEXT,
         post_type VARCHAR(50) NOT NULL,
-        category_id INT NOT NULL,
+        category VARCHAR(100),
         published_date DATE NOT NULL,
         featured_image VARCHAR(512),
         notion_last_edited_time DATETIME NOT NULL,
@@ -78,14 +78,6 @@ def init_db_schema():
         caption TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    """
-
-    # 카테고리 테이블
-    categories_table_sql = """
-    CREATE TABLE IF NOT EXISTS categories (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     """
 
@@ -112,23 +104,15 @@ def init_db_schema():
         logging.info("'posts' 테이블이 준비되었습니다.")
         cursor.execute(images_table_sql)
         logging.info("'images' 테이블이 준비되었습니다.")
-        cursor.execute(categories_table_sql)
-        logging.info("'categories' 테이블이 준비되었습니다.")
         cursor.execute(tags_table_sql)
         logging.info("'tags' 테이블이 준비되었습니다.")
         cursor.execute(post_tags_table_sql)
         logging.info("'post_tags' 테이블이 준비되었습니다.")
-        cursor.execute("ALTER TABLE posts ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id)")
-        logging.info("categories 외래 키 제약 조건 추가가 성공적으로 완료되었습니다.")
         conn.commit()
-        logging.info("commit 완료: 모든 테이블이 성공적으로 생성되었습니다.")
+        logging.info("DB 스키마 초기화가 성공적으로 완료되었습니다.")
     except mysql.connector.Error as err:
-        # 이미 제약 조건이 존재하는 경우 발생하는 에러(1826)는 무시합니다.
-        if err.errno == 1826:
-            pass
-        else:
-            logging.error(f"테이블 생성 중 오류 발생: {err}")
-            conn.rollback() # 오류 발생 시 롤백
+        logging.error(f"테이블 생성 중 오류 발생: {err}")
+        conn.rollback() # 오류 발생 시 롤백
     finally:
         close_db_connection(conn, cursor)
 
@@ -141,12 +125,8 @@ def upsert_post(post_data):
 
     cursor = conn.cursor()
 
-    # 카테고리 이름으로 ID를 가져오거나 생성
-    logging.info(f"포스트 정보 표시 '{post_data}'")
-    category_id = get_or_create_category_id(cursor, post_data['category'])
-
     sql = """
-    INSERT INTO posts (id, slug, title, description, content, post_type, category_id, published_date, featured_image, notion_last_edited_time)
+    INSERT INTO posts (id, slug, title, description, content, post_type, category, published_date, featured_image, notion_last_edited_time)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE
         slug = VALUES(slug),
@@ -154,7 +134,7 @@ def upsert_post(post_data):
         description = VALUES(description),
         content = VALUES(content),
         post_type = VALUES(post_type),
-        category_id = VALUES(category_id),
+        category = VALUES(category),
         published_date = VALUES(published_date),
         featured_image = VALUES(featured_image),
         notion_last_edited_time = VALUES(notion_last_edited_time),
@@ -168,7 +148,7 @@ def upsert_post(post_data):
             post_data.get('description'), # Optional
             post_data.get('content'),     # Optional
             post_data['post_type'],
-            category_id,    # Optional
+            post_data.get('category'),    # Optional
             post_data['published_date'],
             post_data.get('featured_image'), # Optional
             post_data['notion_last_edited_time']
@@ -206,29 +186,6 @@ def get_post_notion_last_edited_time(post_id):
     finally:
         close_db_connection(conn, cursor)
 
-
-
-
-# 카테고리 이름으로 ID를 찾거나, 없으면 새로 생성 후 ID를 반환합니다.s
-def get_or_create_category_id(cursor, category_name):
-    if not category_name:
-        return None
-    
-    # 카테고리가 이미 존재하는지 확인
-    cursor.execute("SELECT id FROM categories WHERE name = %s", (category_name,))
-    result = cursor.fetchone()
-
-    # 카테고리가 존재하면 해당 ID 반환
-    # result는 (id,) 형태의 튜플이므로, result[0]
-    if result:
-        return result[0]
-    else:
-        # 존재하지 않으면 새로 추가
-        cursor.execute("INSERT INTO categories (name) VALUES (%s)", (category_name,))
-        return cursor.lastrowid # 새로 생성된 ID 반환
-    
-
-
 # 태그 테이블에서 검색, 없으면 새로 생성, 해당 태그 ID 반환
 def get_or_create_tag_id(cursor, tag_name):
 
@@ -241,7 +198,6 @@ def get_or_create_tag_id(cursor, tag_name):
         # 태그가 존재하지 않으면 새로 삽입
         cursor.execute("INSERT INTO tags (name) VALUES (%s)", (tag_name,))
         return cursor.lastrowid 
-
 
 
 # post_tags테이블에 연결 정보 생성

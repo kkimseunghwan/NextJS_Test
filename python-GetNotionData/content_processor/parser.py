@@ -42,7 +42,7 @@ def parse_notion_page_properties(page_data):
         parsed['post_type'] = type_prop.get("name") if type_prop else "Post" # (NOT NULL 요소) > 기본값 Post
 
         # Category (카테고리)
-        category_prop = properties.get("Categorie", {}).get("select", {})
+        category_prop = properties.get("Kategorie", {}).get("select", {})
         parsed['category'] = category_prop.get("name") if category_prop else None
 
         # Tags (태그) - 여러개

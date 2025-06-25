@@ -1,0 +1,31 @@
+{
+  "parser": "@typescript-eslint/parser", // TypeScript 파서 지정
+  "parserOptions": {
+    "ecmaVersion": "latest", // 최신 ECMAScript 기능 사용
+    "sourceType": "module", // ES 모듈 사용
+    "ecmaFeatures": {
+      "jsx": true // JSX 사용
+    },
+    "project": "./tsconfig.json" // 타입 정보를 활용하는 규칙을 위해 tsconfig.json 경로 지정
+  },
+  "env": {
+    "browser": true, // 브라우저 환경 전역 변수 사용
+    "node": true, // Node.js 환경 전역 변수 사용
+    "es2021": true // ES2021 전역 변수 사용
+  },
+  "extends": [
+    "next/core-web-vitals", // Next.js 기본 규칙 (Babel 설정 포함 가능성 있음)
+    "plugin:@typescript-eslint/recommended", // TypeScript 권장 규칙
+    "plugin:@typescript-eslint/recommended-requiring-type-checking", // 타입 정보가 필요한 규칙 (선택 사항, 더 엄격함)
+    "prettier" // Prettier 규칙과 충돌하는 ESLint 규칙 비활성화 (eslint-config-prettier 역할)
+  ],
+  "plugins": [
+    "@typescript-eslint", // TypeScript 플러그인
+    "prettier" // Prettier 플러그인 (eslint-plugin-prettier 역할)
+  ],
+  "rules": {
+    "prettier/prettier": "error" // Prettier 규칙 위반 시 ESLint 오류로 표시
+    // 여기에 필요한 다른 규칙 추가
+    // 예: "@typescript-eslint/no-unused-vars": "warn"
+  }
+}

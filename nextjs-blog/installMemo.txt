@@ -1,0 +1,23 @@
+Markdown을 HTML로 변환 및 스타일 적용
+npm install react-markdown
+npm install -D @tailwindcss/typography
+
+
+Markdown 파일 상단의 YAML frontmatter (---로 감싸진 메타데이터)를 파싱하는 데 사용됩니다.
+npm install gray-matter
+
+Markdown 콘텐츠 내에 포함된 HTML을 실제 HTML 요소로 렌더링
+npm install rehype-raw
+
+npm install react-markdown rehype-raw remark-gfm rehype-pretty-code shiki
+
+npm install next-mdx-remote remark-gfm rehype-raw rehype-pretty-code
+
+npm install rehype-slug unist-util-visit hast-util-to-string
+
+npm install rehype-slug @stefanprobst/rehype-extract-toc
+
+SELECT UI 추가 라이브러리
+npx shadcn@latest add select
+
+npm install mysql2
